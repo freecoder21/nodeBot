@@ -186,5 +186,12 @@ app.listen(PORT, async () => {
   console.log(`Server started at http://localhost:${PORT}`);
 
   // Set the webhook URL
-  await bot.setWebHook(`${WEBHOOK_URL}/webhook/${TOKEN}`);
+  try {
+    const webhookUrl = `${WEBHOOK_URL}/webhook/${TOKEN}`;
+    console.log(`Setting webhook to: ${webhookUrl}`);
+    await bot.setWebHook(webhookUrl);
+    console.log('Webhook set successfully');
+  } catch (error) {
+    console.error('Error setting webhook:', error);
+  }
 });
