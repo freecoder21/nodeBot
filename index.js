@@ -46,14 +46,21 @@ bot.onText(/\/start/, async (msg, match) => {
 
   try {
     const member = await bot.getChatMember(CHANNEL_ID, userId);
-    if (!['member', 'administrator', 'creator'].includes(member.status)) {
+    const isMember = ['member', 'administrator', 'creator'].includes(member.status);
+
+    if (!isMember) {
       await bot.sendMessage(userId, `❗ Vous devez rejoindre notre canal avant d'utiliser le bot.\n\n🔗 [Cliquez ici pour rejoindre notre canal](${CHANNEL_INVITE_LINK})`, {
         parse_mode: 'Markdown',
         reply_markup: subscribKeyboard
       });
       return;
+    } else {
+      await bot.sendMessage(userId, `🎉 Bienvenue dans le canal !\nMerci de nous rejoindre, profitez de nos services.`, {
+        reply_markup: keyboard1
+      });
     }
   } catch (error) {
+    console.error('Error checking chat member:', error);
     await bot.sendMessage(userId, "❗ Impossible de vérifier l'adhésion au canal. Veuillez réessayer plus tard.");
     return;
   }
@@ -125,48 +132,16 @@ bot.on('message', async (msg) => {
       userData[userId].phone = text;
       userData[userId].awaiting_phone = false;
       await bot.sendMessage(userId, "📱 Merci pour votre numéro de téléphone ! Votre demande de retrait sera traitée sous peu. 💳");
-
-      const phone = userData[userId].phone;
-      const hiddenPhone = phone.length > 6 ? `${phone.slice(0, -6)}******` : '******';
-
-      const paymentMessage = `💸 Nouvelle Demande de Paiement Réussie !**\n\n👤 Utilisateur : ${userData[userId].name}\n📱  Numéro : ${hiddenPhone}\n🏦 Méthode de Paiement : Mobile Payment\n💳 Montant : ${userData[userId].sold} FCFA\n\n✅ STATUS : APPROUVÉ ✅`;
-      try {
-        await bot.sendMessage(CHANNEL_ID, paymentMessage, { parse_mode: 'Markdown' });
-      } catch (error) {
-        await bot.sendMessage(userId, "❗ Une erreur s'est produite lors de l'envoi du message au canal.");
-      }
     } else {
       await bot.sendMessage(userId, "❗ Le numéro saisi est invalide. Veuillez entrer un numéro de téléphone correct.");
     }
     return;
   }
 
+  // Handle other buttons based on user interaction
   if (text === "Solde 💲") {
     const remainingInvites = 10 - userData[userId].invite;
     await bot.sendMessage(userId, `👨🏻‍💼 Nom : ${userData[userId].name}\n🧑‍🤝‍🧑 Amis invités : ${userData[userId].invite}\n💰 Solde actuel : ${userData[userId].sold} FCFA\n\n🚀 Il vous reste encore ${remainingInvites} invitations pour atteindre le seuil de retrait !`);
-  } else if (text === "Inviter 🧑‍🤝‍🧑") {
-    const inviteLink = `https://t.me/YoutubeComunityBot?start=${userId}`;
-    await bot.sendMessage(userId, `🔗 Votre lien d'invitation :\n${inviteLink}\n\n🎯 Partagez ce lien pour gagner 1 000 FCFA par ami invité ! 💸`);
-  } else if (text === "Retirer 💳") {
-    if (userData[userId].sold >= 10000) {
-      userData[userId].awaiting_phone = true;
-      await bot.sendMessage(userId, "🎉 Félicitations ! Vous pouvez retirer vos gains. Entrez votre numéro de téléphone. 📱");
-    } else {
-      const remainingAmount = 10000 - userData[userId].sold;
-      await bot.sendMessage(userId, `❗ Solde insuffisant.\n💰 Votre solde actuel : ${userData[userId].sold} FCFA\n🚀 Il vous manque seulement ${remainingAmount} FCFA pour effectuer un retrait !\n🔗 Continuez à inviter vos amis pour atteindre le montant nécessaire et profitez de vos gains !`);
-    }
-  } else if (text === "Bonus 💰") {
-    if (userData[userId].Bonus === 0) {
-      userData[userId].sold += 300;
-      userData[userId].Bonus = 1;
-      await bot.sendMessage(userId, `🎉 Félicitations ! Vous avez reçu un bonus de 300 FCFA !\n💰 Votre nouveau solde : ${userData[userId].sold} FCFA\n🚀 Invitez encore plus d'amis pour obtenir des bonus supplémentaires et faire croître votre solde !`);
-    } else {
-      await bot.sendMessage(userId, "❗ Bonus déjà réclamé.");
-    }
-  } else if (text === "paramètre ⚡⚙️") {
-    await bot.sendMessage(userId, `⚡⚙️ Historique de Paiement ⚡⚙️\n\n👤 Nom : ${userData[userId].name}\n💳 Solde : ${userData[userId].sold} FCFA\n🧑‍🤝‍🧑 Amis invités : ${userData[userId].invite}\n🆔 ID Utilisateur : ${userId}`);
-  } else if (text === "🤷comment ça marche💡") {
-    await bot.sendMessage(userId, `🤷 **Comment ça marche ?** 💡\n\n👨‍💻 **Q : Comment puis-je gagner de l'argent avec ce bot ?**\n👉 **R :** Vous gagnez de l'argent en invitant vos amis à utiliser ce bot. Chaque invitation réussie vous rapporte **1 000 FCFA** ! 🎉\n\n💰 **Q : Est-ce que je reçois un bonus au départ ?**\n👉 **R :** Oui, tous les nouveaux utilisateurs reçoivent un bonus de **300 FCFA** lors de leur première inscription ! Cliquez sur le bouton **réclamer 💰** pour récupérer votre bonus maintenant ! 🚀\n\n🔗 **Q : Comment partager mon lien d'invitation ?**\n👉 **R :** Cliquez sur le bouton **Inviter 🧑‍🤝‍🧑** pour obtenir votre lien d'invitation unique. Partagez ce lien avec vos amis et gagnez des bonus lorsque vos amis s'inscrivent avec votre lien ! 💸\n\n🎯 **Q : Combien puis-je gagner par invitation ?**\n👉 **R :** Vous gagnez **1 000 FCFA** chaque fois qu'une personne s'inscrit via votre lien. De plus, vous recevez un petit bonus à chaque clic sur votre lien ! 📈\n\n💳 **Q : Comment retirer mes gains ?**\n👉 **R :** Une fois que vous atteignez un solde de **10 000 FCFA**, vous pouvez demander un retrait. Cliquez sur le bouton **Retirer 💳** et suivez les instructions pour fournir votre numéro de téléphone. 📱\n\n🎉 **Q : Est-ce qu'il y a des limites ?**\n👉 **R :** Non, vous pouvez inviter autant d'amis que vous le souhaitez et continuer à augmenter vos gains sans limite ! 🚀\n\n⚡ **Astuce :** Utilisez le bot régulièrement et partagez votre lien pour maximiser vos revenus. Plus vous invitez, plus vous gagnez ! 💪`);
   }
 });
 
